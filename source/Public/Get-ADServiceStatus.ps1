@@ -82,36 +82,39 @@ function Get-ADServiceStatus {
             'FRS'       # File Replication Service (legacy)
         )
 
-        # If no computer names specified, get all DCs from current domain
-        if (-not $ComputerName) {
-            try {
-                Write-Verbose "No ComputerName specified, retrieving all domain controllers"
-                $ComputerName = Get-ADDomainController -Filter * -ErrorAction Stop |
-                    Select-Object -ExpandProperty HostName
-                Write-Verbose "Found $($ComputerName.Count) domain controller(s)"
-            }
-            catch {
-                Write-Error "Failed to retrieve domain controllers: $_"
-                throw
-            }
-        }
+        # Track if we got any pipeline input
+        $pipelineInputReceived = $false
     }
 
     process {
-        foreach ($computer in $ComputerName) {
+        # If ComputerName is provided (either as parameter or pipeline), use it
+        if ($ComputerName) {
+            $pipelineInputReceived = $true
+            $computersToCheck = $ComputerName
+        }
+        else {
+            # Will be handled in End block if no pipeline input received
+            return
+        }
+        foreach ($computer in $computersToCheck) {
             Write-Verbose "Checking services on $computer"
 
             try {
-                if ($Credential) {
-                    # Note: Get-Service doesn't support -Credential in PS 5.1
-                    # Use Invoke-Command instead for credential support
-                    $services = Invoke-Command -ComputerName $computer -Credential $Credential -ScriptBlock {
+                # Use Invoke-Command for cross-platform compatibility
+                # Get-Service -ComputerName doesn't exist in PS 7+
+                $icmParams = @{
+                    ComputerName = $computer
+                    ErrorAction  = 'Stop'
+                    ScriptBlock  = {
                         Get-Service -Name $using:requiredServices, $using:optionalServices -ErrorAction SilentlyContinue
-                    } -ErrorAction Stop
+                    }
                 }
-                else {
-                    $services = Get-Service -ComputerName $computer -Name ($requiredServices + $optionalServices) -ErrorAction SilentlyContinue
+
+                if ($Credential) {
+                    $icmParams['Credential'] = $Credential
                 }
+
+                $services = Invoke-Command @icmParams
 
                 # Analyze service status
                 $stoppedServices = @()
@@ -189,7 +192,7 @@ function Get-ADServiceStatus {
                     'Service Status',
                     'AD Service Health',
                     $computer,
-                    'Unknown',
+                    'Critical',
                     "Failed to retrieve service status: $($_.Exception.Message)",
                     $null,
                     "Verify network connectivity, WinRM configuration, and appropriate permissions."
@@ -199,6 +202,23 @@ function Get-ADServiceStatus {
     }
 
     end {
+        # If no pipeline input was received and no parameter was provided, get all DCs
+        if (-not $pipelineInputReceived) {
+            try {
+                Write-Verbose "No ComputerName specified, retrieving all domain controllers"
+                $allDCs = Get-ADDomainController -Filter * -ErrorAction Stop |
+                    Select-Object -ExpandProperty HostName
+                Write-Verbose "Found $($allDCs.Count) domain controller(s)"
+
+                # Call the function recursively with the discovered DCs
+                Get-ADServiceStatus -ComputerName $allDCs -Credential $Credential
+            }
+            catch {
+                Write-Error "Failed to retrieve domain controllers: $_"
+                throw
+            }
+        }
+
         Write-Verbose "AD service status check completed"
     }
 }
