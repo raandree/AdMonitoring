@@ -20,4 +20,3 @@
     Sampler                     = 'latest'
     'Sampler.GitHubTasks'       = 'latest'
 }
-
