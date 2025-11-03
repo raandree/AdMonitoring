@@ -1,5 +1,5 @@
 BeforeAll {
-    $modulePath = "$PSScriptRoot\..\..\..\source\AdMonitoring.psd1"
+    $modulePath = "$PSScriptRoot\..\..\..\output\module\AdMonitoring"
     Import-Module $modulePath -Force -ErrorAction Stop
 }
 
@@ -28,13 +28,8 @@ Describe 'Get-ADServiceStatus' {
     
     Context 'When all services are healthy' {
         BeforeAll {
-            # Mock Get-ADDomainController
-            Mock Get-ADDomainController {
-                [PSCustomObject]@{ HostName = 'DC01.contoso.com' }
-            }
-            
             # Mock Get-Service to return healthy services
-            Mock Get-Service {
+            Mock -CommandName Get-Service -ModuleName AdMonitoring {
                 @(
                     [PSCustomObject]@{ Name = 'NTDS'; Status = 'Running'; StartType = 'Automatic' }
                     [PSCustomObject]@{ Name = 'KDC'; Status = 'Running'; StartType = 'Automatic' }
@@ -72,18 +67,14 @@ Describe 'Get-ADServiceStatus' {
         }
         
         It 'Should write verbose output when -Verbose is used' {
-            $verboseOutput = Get-ADServiceStatus -Verbose 4>&1
+            $verboseOutput = Get-ADServiceStatus -ComputerName 'DC01' -Verbose 4>&1
             $verboseOutput | Should -Not -BeNullOrEmpty
         }
     }
     
     Context 'When services are stopped' {
         BeforeAll {
-            Mock Get-ADDomainController {
-                [PSCustomObject]@{ HostName = 'DC01.contoso.com' }
-            }
-            
-            Mock Get-Service {
+                        Mock -CommandName Get-Service -ModuleName AdMonitoring {
                 @(
                     [PSCustomObject]@{ Name = 'NTDS'; Status = 'Stopped'; StartType = 'Automatic' }
                     [PSCustomObject]@{ Name = 'KDC'; Status = 'Running'; StartType = 'Automatic' }
@@ -117,11 +108,7 @@ Describe 'Get-ADServiceStatus' {
     
     Context 'When services have manual startup' {
         BeforeAll {
-            Mock Get-ADDomainController {
-                [PSCustomObject]@{ HostName = 'DC01.contoso.com' }
-            }
-            
-            Mock Get-Service {
+                        Mock -CommandName Get-Service -ModuleName AdMonitoring {
                 @(
                     [PSCustomObject]@{ Name = 'NTDS'; Status = 'Running'; StartType = 'Automatic' }
                     [PSCustomObject]@{ Name = 'KDC'; Status = 'Running'; StartType = 'Automatic' }
@@ -145,7 +132,7 @@ Describe 'Get-ADServiceStatus' {
     
     Context 'When specifying multiple computers' {
         BeforeAll {
-            Mock Get-Service {
+            Mock -CommandName Get-Service -ModuleName AdMonitoring {
                 param($ComputerName)
                 @(
                     [PSCustomObject]@{ Name = 'NTDS'; Status = 'Running'; StartType = 'Automatic' }
@@ -171,34 +158,30 @@ Describe 'Get-ADServiceStatus' {
     
     Context 'When connection fails' {
         BeforeAll {
-            Mock Get-ADDomainController {
-                [PSCustomObject]@{ HostName = 'DC01.contoso.com' }
-            }
-            
-            Mock Get-Service {
+                        Mock -CommandName Get-Service -ModuleName AdMonitoring {
                 throw "RPC server is unavailable"
             }
         }
         
         It 'Should return Unknown status on error' {
-            $result = Get-ADServiceStatus -ErrorAction SilentlyContinue
+            $result = Get-ADServiceStatus -ComputerName 'DC01' -ErrorAction SilentlyContinue
             $result.Status | Should -Be 'Unknown'
         }
         
         It 'Should provide connectivity remediation' {
-            $result = Get-ADServiceStatus -ErrorAction SilentlyContinue
+            $result = Get-ADServiceStatus -ComputerName 'DC01' -ErrorAction SilentlyContinue
             $result.Remediation | Should -Match 'network connectivity'
         }
         
         It 'Should capture error message' {
-            $result = Get-ADServiceStatus -ErrorAction SilentlyContinue
+            $result = Get-ADServiceStatus -ComputerName 'DC01' -ErrorAction SilentlyContinue
             $result.Message | Should -Match 'Failed to retrieve service status'
         }
     }
     
     Context 'Pipeline Input' {
         BeforeAll {
-            Mock Get-Service {
+            Mock -CommandName Get-Service -ModuleName AdMonitoring {
                 @(
                     [PSCustomObject]@{ Name = 'NTDS'; Status = 'Running'; StartType = 'Automatic' }
                     [PSCustomObject]@{ Name = 'KDC'; Status = 'Running'; StartType = 'Automatic' }

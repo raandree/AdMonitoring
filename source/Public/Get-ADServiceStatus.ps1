@@ -2,12 +2,12 @@ function Get-ADServiceStatus {
     <#
     .SYNOPSIS
         Retrieves the status of critical Active Directory services on domain controllers.
-    
+
     .DESCRIPTION
         This function checks the status of essential Active Directory services on specified
         domain controllers. It validates that services are running and configured with
         appropriate startup types.
-        
+
         The following services are checked:
         - NTDS (Active Directory Domain Services)
         - KDC (Kerberos Key Distribution Center)
@@ -15,38 +15,38 @@ function Get-ADServiceStatus {
         - Netlogon (Net Logon)
         - ADWS (Active Directory Web Services)
         - DFSR (DFS Replication) or FRS (File Replication Service)
-    
+
     .PARAMETER ComputerName
         The name(s) of the domain controller(s) to check. If not specified,
         all domain controllers in the current domain will be checked.
-    
+
     .PARAMETER Credential
         Credentials to use for remote connection. If not specified, current user
         credentials are used.
-    
+
     .EXAMPLE
         Get-ADServiceStatus
-        
+
         Checks AD service status on all domain controllers in the current domain.
-    
+
     .EXAMPLE
         Get-ADServiceStatus -ComputerName 'DC01', 'DC02'
-        
+
         Checks AD service status on specific domain controllers.
-    
+
     .EXAMPLE
         Get-ADServiceStatus -ComputerName 'DC01' -Credential (Get-Credential)
-        
+
         Checks AD service status using alternate credentials.
-    
+
     .OUTPUTS
         HealthCheckResult
-        
+
         Returns HealthCheckResult objects with the following statuses:
         - Healthy: All required services are running with automatic startup
         - Warning: Services running but startup type is manual
         - Critical: One or more required services are stopped or disabled
-    
+
     .NOTES
         Requires:
         - ActiveDirectory PowerShell module
@@ -59,14 +59,14 @@ function Get-ADServiceStatus {
         [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [Alias('Name', 'DomainController', 'DC')]
         [string[]]$ComputerName,
-        
+
         [Parameter()]
         [PSCredential]$Credential
     )
-    
+
     begin {
         Write-Verbose "Starting AD service status check"
-        
+
         # Define required services
         $requiredServices = @(
             'NTDS'      # Active Directory Domain Services
@@ -75,18 +75,18 @@ function Get-ADServiceStatus {
             'Netlogon'  # Net Logon
             'ADWS'      # Active Directory Web Services
         )
-        
+
         # Optional services (check if exists, don't fail if missing)
         $optionalServices = @(
             'DFSR'      # DFS Replication
             'FRS'       # File Replication Service (legacy)
         )
-        
+
         # If no computer names specified, get all DCs from current domain
         if (-not $ComputerName) {
             try {
                 Write-Verbose "No ComputerName specified, retrieving all domain controllers"
-                $ComputerName = Get-ADDomainController -Filter * -ErrorAction Stop | 
+                $ComputerName = Get-ADDomainController -Filter * -ErrorAction Stop |
                     Select-Object -ExpandProperty HostName
                 Write-Verbose "Found $($ComputerName.Count) domain controller(s)"
             }
@@ -96,18 +96,12 @@ function Get-ADServiceStatus {
             }
         }
     }
-    
+
     process {
         foreach ($computer in $ComputerName) {
             Write-Verbose "Checking services on $computer"
-            
+
             try {
-                # Build parameter hashtable for Get-Service
-                $serviceParams = @{
-                    ComputerName = $computer
-                    ErrorAction  = 'Stop'
-                }
-                
                 if ($Credential) {
                     # Note: Get-Service doesn't support -Credential in PS 5.1
                     # Use Invoke-Command instead for credential support
@@ -118,20 +112,20 @@ function Get-ADServiceStatus {
                 else {
                     $services = Get-Service -ComputerName $computer -Name ($requiredServices + $optionalServices) -ErrorAction SilentlyContinue
                 }
-                
+
                 # Analyze service status
                 $stoppedServices = @()
                 $manualServices = @()
                 $healthyServices = @()
-                
+
                 foreach ($serviceName in $requiredServices) {
                     $service = $services | Where-Object { $_.Name -eq $serviceName }
-                    
+
                     if (-not $service) {
                         $stoppedServices += $serviceName
                         continue
                     }
-                    
+
                     if ($service.Status -ne 'Running') {
                         $stoppedServices += "$serviceName ($($service.Status))"
                     }
@@ -142,7 +136,7 @@ function Get-ADServiceStatus {
                         $healthyServices += $serviceName
                     }
                 }
-                
+
                 # Check optional services (informational only)
                 $optionalServiceStatus = @{}
                 foreach ($serviceName in $optionalServices) {
@@ -151,7 +145,7 @@ function Get-ADServiceStatus {
                         $optionalServiceStatus[$serviceName] = $service.Status
                     }
                 }
-                
+
                 # Determine overall health status
                 if ($stoppedServices.Count -gt 0) {
                     $status = 'Critical'
@@ -168,7 +162,7 @@ function Get-ADServiceStatus {
                     $message = "All $($healthyServices.Count) required services are running and configured correctly"
                     $remediation = $null
                 }
-                
+
                 # Create result object
                 $data = [PSCustomObject]@{
                     RequiredServices = $requiredServices
@@ -177,7 +171,7 @@ function Get-ADServiceStatus {
                     ManualServices   = $manualServices
                     OptionalServices = $optionalServiceStatus
                 }
-                
+
                 [HealthCheckResult]::new(
                     'Service Status',
                     'AD Service Health',
@@ -190,7 +184,7 @@ function Get-ADServiceStatus {
             }
             catch {
                 Write-Error "Failed to check services on ${computer}: $_"
-                
+
                 [HealthCheckResult]::new(
                     'Service Status',
                     'AD Service Health',
@@ -203,7 +197,7 @@ function Get-ADServiceStatus {
             }
         }
     }
-    
+
     end {
         Write-Verbose "AD service status check completed"
     }
