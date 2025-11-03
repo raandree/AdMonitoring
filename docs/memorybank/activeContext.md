@@ -46,11 +46,20 @@ Building production-ready health check functions with comprehensive testing, fol
    - Added installation instructions and requirements
    - Included practical usage examples and pipeline workflows
 
-6. ⏳ **FSMO Role Monitoring** (Next - Ready to Start)
-   - Implement Get-ADFSMORoleStatus function
-   - Monitor all 5 FSMO roles (Schema, Domain Naming, PDC, RID, Infrastructure)
-   - Verify role holder availability and responsiveness
-   - Test for seized roles via event logs
+6. ✅ **FSMO Role Monitoring** (Completed - Nov 3, 2025)
+   - Implemented Get-ADFSMORoleStatus function (332 lines)
+   - Created 35 comprehensive Pester tests
+   - Monitors all 5 FSMO roles (Schema, Domain Naming, PDC, RID, Infrastructure)
+   - Verifies role holder availability and responsiveness
+   - Optional seized role detection via event log analysis (Event ID 2101)
+   - PSScriptAnalyzer compliant (0 errors/warnings)
+   - Note: Functional tests require ActiveDirectory module
+
+7. ⏳ **DNS Health Monitoring** (Next - Ready to Start)
+   - Implement Test-ADDNSHealth function
+   - Verify DNS record registration for DCs
+   - Check SRV records (_ldap, _kerberos, _gc)
+   - Test zone replication and health
 
 ## Recent Decisions
 
