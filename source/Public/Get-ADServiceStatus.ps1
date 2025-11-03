@@ -82,6 +82,9 @@ function Get-ADServiceStatus {
             'FRS'       # File Replication Service (legacy)
         )
 
+        # Combine all services for querying
+        $allServiceNames = $requiredServices + $optionalServices
+
         # Track if we got any pipeline input
         $pipelineInputReceived = $false
     }
@@ -106,7 +109,7 @@ function Get-ADServiceStatus {
                     ComputerName = $computer
                     ErrorAction  = 'Stop'
                     ScriptBlock  = {
-                        Get-Service -Name $using:requiredServices, $using:optionalServices -ErrorAction SilentlyContinue
+                        Get-Service -Name $using:allServiceNames -ErrorAction SilentlyContinue
                     }
                 }
 
