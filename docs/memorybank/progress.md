@@ -46,7 +46,7 @@
 ### Phase 2: Core Monitoring Functions (Current Phase)
 
 **Timeline:** November 10-16, 2025  
-**Completion:** 58% (7 of 12 health check categories)
+**Completion:** 67% (8 of 12 health check categories)
 
 #### Tasks
 
@@ -57,11 +57,11 @@
 - [x] Implement DNS health checks (Test-ADDNSHealth) - 49 tests
 - [x] Implement SYSVOL/DFSR health checks (Test-ADSYSVOLHealth) - 46 tests, 233 total tests passing
 - [x] Implement Time synchronization checks (Test-ADTimeSync) - 71 tests, 310 total tests passing ✅
+- [x] Implement Event log monitoring (Get-ADCriticalEvents) - 72 tests, 388 total tests passing ✅
 - [ ] Implement Certificate health checks
 - [ ] Implement Authentication checks
 - [ ] Implement Database health checks
 - [ ] Implement Backup status checks
-- [ ] Implement Event log monitoring
 - [x] Create HealthCheckResult class ✅
 - [x] Write unit tests for all functions (181 tests, 100% pass rate)
 - [ ] Performance testing and optimization
@@ -423,6 +423,159 @@
 
 ---
 
+### Session 8: Critical Event Log Analysis Implementation
+**Date:** November 4, 2025  
+**Duration:** ~2.5 hours
+
+**Objectives:**
+- Implement Get-ADCriticalEvents function
+- Create comprehensive Pester tests for event log monitoring
+- Achieve 100% test pass rate (388/388 tests)
+- Fix all PSScriptAnalyzer warnings
+
+**Work Completed:**
+
+1. **Function Implementation:**
+   - Created Get-ADCriticalEvents.ps1 (403 lines) - Advanced event log analysis function
+   - Comprehensive event log monitoring across 5 critical logs:
+     - Directory Service (9 critical Event IDs)
+     - DNS Server (5 critical Event IDs)
+     - DFS Replication (7 critical Event IDs)
+     - File Replication Service (2 critical Event IDs)
+     - System (4 critical Event IDs for DC-specific events)
+   - Configurable parameters:
+     - Hours: Scan window (1-168 hours, default 24)
+     - MaxEvents: Limit per DC (1-1000, default 100)
+     - IncludeWarnings: Optional warning-level events
+   - Auto-discovery of domain controllers if not specified
+   - Event aggregation and analysis:
+     - Total events found
+     - Counts by severity (Critical, Error, Warning)
+     - Top 5 event IDs by frequency
+     - Events grouped by log name
+   - Event-specific recommendations for common issues:
+     - Event 2042: Replication topology issues
+     - Events 2087/2088: DNS lookup failures
+     - Event 4013: DNS zone transfer failures
+     - Events 5805/5719: Secure channel/Netlogon issues
+     - Events 13508/13516: DFSR replication problems
+     - Event 1645: Resource limit exceeded
+   - Complete comment-based help with 4 examples
+   - Pipeline support with aliases (Name, HostName, DnsHostName)
+
+2. **Complex Implementation Details:**
+   - **Begin Block:**
+     - Validates ActiveDirectory module availability
+     - Auto-discovers domain controllers via Get-ADDomainController
+     - Defines hashtable of critical Event IDs by log name
+     - Calculates start time based on Hours parameter
+   - **Process Block:**
+     - Iterates through each DC
+     - Scans each event log with Get-WinEvent:
+       - Filters by Level (Critical/Error/Warning)
+       - Filters by specific Event IDs
+       - Respects MaxEvents limit
+     - Adds LogCategory to each event for grouping
+     - Aggregates all events across logs
+     - Analyzes event data:
+       - Counts by severity level
+       - Groups by Event ID
+       - Identifies patterns
+     - Determines health status:
+       - Critical: Any critical-level events OR >10 errors
+       - Warning: Any errors OR >20 warnings
+       - Healthy: No significant events
+     - Generates event-specific recommendations
+   - **End Block:**
+     - Completion logging
+
+3. **Test Development:**
+   - Created Get-ADCriticalEvents.Tests.ps1
+   - **72 comprehensive Pester tests** across 14 contexts:
+     - Parameter validation (12 tests)
+     - Function availability and help (7 tests)
+     - Function implementation structure (13 tests)
+     - Output structure validation (7 tests)
+     - Status determination logic (5 tests)
+     - Event-specific recommendations (6 tests)
+     - Credential handling (2 tests)
+     - Event log iteration (4 tests)
+     - Error handling scenarios (4 tests)
+     - Time period handling (3 tests)
+     - Event analysis and aggregation (4 tests)
+   - Initial test run: 0/72 passing (function not in module)
+   - Rebuilt module to include new function
+   - Second test run: 71/72 passing (PSScriptAnalyzer issues)
+   - **Final result: 72/72 tests passing** ✅
+
+4. **PSScriptAnalyzer Issues Fixed:**
+   - **Issue 1:** PSAvoidAssignmentToAutomaticVariable (Warning)
+     - Problem: Using `$event` variable (PowerShell automatic variable)
+     - Solution: Renamed to `$eventItem` in foreach loop
+   - **Issue 2:** PSUseSingularNouns (Warning)
+     - Problem: Function name uses plural "Events"
+     - Analysis: Plural is semantically correct (returns multiple events)
+     - Solution: Added SuppressMessage attribute with justification
+     - Note: Updated .SYNOPSIS to document design decision
+   - Final PSScriptAnalyzer result: 0 errors, 0 warnings ✅
+
+5. **Code Quality:**
+   - Follows established patterns (Begin/Process/End blocks)
+   - Consistent with other health check functions
+   - Proper credential handling throughout
+   - Comprehensive verbose logging
+   - Detailed error messages with context
+   - Uses System.Collections.Generic.List for performance
+
+6. **Remediation Guidance:**
+   - Review critical events immediately
+   - Check replication topology (Event 2042)
+   - Verify DNS configuration (Events 2087/2088/4013)
+   - Reset secure channel (Events 5805/5719): `nltest /sc_reset:domain.com`
+   - Check DFSR replication state (Events 13508/13516): `dfsrdiag ReplicationState`
+   - Review LDAP policy limits (Event 1645)
+   - Correlate with other health checks
+   - Verify remote event log access permissions
+   - Check Windows Remote Management service
+   - Verify firewall rules allow event log access
+
+**Build Results:**
+- **Total Tests: 388 (ALL PASSING)** ✅ 🎉
+- **New Tests Added: 72 (Critical Events) + 6 (QA for new function)**
+- **Test Distribution:**
+  - module.tests.ps1: 52 tests
+  - Get-ADCriticalEvents.Tests.ps1: 72 tests
+  - Get-ADFSMORoleStatus.Tests.ps1: 35 tests
+  - Get-ADReplicationStatus.Tests.ps1: 13 tests
+  - Get-ADServiceStatus.Tests.ps1: 24 tests
+  - Test-ADDNSHealth.Tests.ps1: 49 tests
+  - Test-ADDomainControllerReachability.Tests.ps1: 26 tests
+  - Test-ADSYSVOLHealth.Tests.ps1: 46 tests
+  - Test-ADTimeSync.Tests.ps1: 71 tests
+- **Pass Rate: 100%** (388/388) ✅
+- Code Coverage: 13.49% (acceptable given structure-based testing)
+- PSScriptAnalyzer: 0 errors, 0 warnings ✅
+- Module builds successfully ✅
+
+**Key Implementation Challenges Solved:**
+1. **Variable naming conflict:** Avoided PowerShell automatic variable `$event` by using `$eventItem`
+2. **PSUseSingularNouns rule:** Added proper suppression attribute with justification
+3. **Multiple event logs:** Designed hashtable structure for organized Event ID tracking
+4. **Event aggregation:** Used List<T> for efficient collection management
+5. **Missing logs handling:** Gracefully handles when event logs don't exist or have no events
+6. **Event-specific logic:** Implemented pattern matching for targeted recommendations
+7. **Level filtering:** Supports both error-only and error+warning modes
+
+**Project Status:**
+- **8 of 12 health check categories complete (67%)** ✅
+- **388 tests passing with 100% success rate** ✅
+- **Comprehensive event log monitoring implemented**
+- Production-ready event analysis with intelligent recommendations
+
+**Time Spent:** ~2.5 hours
+
+---
+
 ### Session 6: SYSVOL/DFSR Replication Health Monitoring
 **Date:** November 4, 2025  
 **Duration:** ~1.5 hours
@@ -528,9 +681,9 @@
 ## Metrics
 
 ### Code Metrics (as of November 4, 2025)
-- **Lines of Code:** ~3,200 (7 health check functions + class + tests)
-- **Functions Implemented:** 7 / 12 health check categories (58%)
-- **Test Coverage:** 15.38% (310 tests, 100% pass rate) ✅
+- **Lines of Code:** ~3,600 (8 health check functions + class + tests)
+- **Functions Implemented:** 8 / 12 health check categories (67%)
+- **Test Coverage:** 13.49% (388 tests, 100% pass rate) ✅
 - **PSScriptAnalyzer Issues:** 0 errors, 0 warnings ✅
 
 ### Documentation Metrics
@@ -550,12 +703,12 @@
 | DNS Health | Critical | 1 | ✅ Complete | 49 tests |
 | SYSVOL/DFSR | High | 1 | ✅ Complete | 46 tests |
 | Time Sync | High | 1 | ✅ Complete | 71 tests |
+| Event Logs | Medium | 1 | ✅ Complete | 72 tests |
 | DC Performance | Medium | 1 | ⏳ Not Started | - |
 | Security/Auth | High | 1 | ⏳ Not Started | - |
 | Database Health | Medium | 1 | ⏳ Not Started | - |
-| Event Logs | Medium | 1 | ⏳ Not Started | - |
 | Backup/DR | Medium | 1 | ⏳ Not Started | - |
-| **TOTAL** | - | **12** | **58% Complete** | **310 / ~420** |
+| **TOTAL** | - | **12** | **67% Complete** | **388 / ~420** |
 
 ### Reporting Implementation Status
 

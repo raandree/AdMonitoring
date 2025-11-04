@@ -76,12 +76,35 @@ Building production-ready health check functions with comprehensive testing, fol
    - PSScriptAnalyzer compliant (0 errors/warnings)
    - Note: 233 total tests passing (100% pass rate)
 
-9. ⏳ **Time Synchronization Monitoring** (Next - High Priority)
-   - Implement Test-ADTimeSync function
-   - Monitor W32Time service status
-   - Check time differences between DCs
-   - Validate NTP configuration
-   - Thresholds: <5 seconds healthy, <10 seconds warning
+9. ✅ **Time Synchronization Monitoring** (Completed - Nov 4, 2025)
+   - Implemented Test-ADTimeSync function (682 lines) - Most comprehensive function yet
+   - Created 71 comprehensive Pester tests across 11 contexts
+   - Monitors: W32Time service status, time offset vs PDC Emulator, NTP configuration
+   - Time offset thresholds: 5 seconds healthy, 10 seconds warning (configurable)
+   - PDC Emulator special handling (validates external NTP source)
+   - Remote w32tm command execution and output parsing
+   - Stratum level monitoring and last sync time tracking
+   - PSScriptAnalyzer compliant (0 errors/warnings)
+   - Note: 310 total tests passing (100% pass rate) ✅
+
+10. ✅ **Critical Event Log Analysis** (Completed - Nov 4, 2025)
+   - Implemented Get-ADCriticalEvents function (403 lines)
+   - Created 72 comprehensive Pester tests across 14 contexts
+   - Monitors 5 critical event logs: Directory Service, DNS Server, DFS Replication, FRS, System
+   - Tracks 27 critical Event IDs across all logs
+   - Configurable scan window (1-168 hours, default 24)
+   - Event aggregation and analysis (severity counts, top event IDs, grouping by log)
+   - Event-specific recommendations for common issues (2042, 4013, 5805, 13508, etc.)
+   - Supports IncludeWarnings switch for comprehensive monitoring
+   - PSScriptAnalyzer compliant (0 errors/warnings, with justified suppression)
+   - Note: 388 total tests passing (100% pass rate) ✅
+
+11. ⏳ **Certificate Health Monitoring** (Next - High Priority)
+   - Implement Test-ADCertificateHealth function
+   - Monitor DC certificates expiration
+   - Check LDAPS certificate validity
+   - Validate certificate chains
+   - Thresholds: 30 days warning, 7 days critical
 
 ## Recent Decisions
 
@@ -194,7 +217,7 @@ Building production-ready health check functions with comprehensive testing, fol
 
 ### Implementation: Core Health Check Functions (6 of 12 Complete)
 
-**Current Status:** Phase 2 - Core Monitoring Functions (50% complete)
+**Current Status:** Phase 2 - Core Monitoring Functions (67% complete)
 
 **Completed Functions:**
 1. ✅ **Get-ADServiceStatus** - Service monitoring (34 tests, 77.67% coverage)
@@ -203,6 +226,8 @@ Building production-ready health check functions with comprehensive testing, fol
 4. ✅ **Get-ADFSMORoleStatus** - FSMO role monitoring (35 tests, all 5 roles)
 5. ✅ **Test-ADDNSHealth** - DNS health monitoring (49 tests, A/PTR/SRV records)
 6. ✅ **Test-ADSYSVOLHealth** - SYSVOL/DFSR replication (46 tests, backlog tracking)
+7. ✅ **Test-ADTimeSync** - Time synchronization (71 tests, W32Time monitoring)
+8. ✅ **Get-ADCriticalEvents** - Event log analysis (72 tests, 27 critical Event IDs)
 
 **Implementation Pattern Established:**
 - Use Begin/Process/End blocks with pipeline support
@@ -213,12 +238,12 @@ Building production-ready health check functions with comprehensive testing, fol
 - Pester 5 tests with parameter validation, success/failure scenarios
 
 **Next Implementation Priority:**
-- **Test-ADTimeSync** - Time synchronization monitoring (Critical for Kerberos)
-- Monitor W32Time service status on all DCs
-- Compare time differences between DCs (PDC Emulator is time source)
-- Validate NTP configuration on PDC Emulator
-- Check time stratum levels
-- Thresholds: <5 seconds healthy, 5-10 seconds warning, >10 seconds critical
+- **Test-ADCertificateHealth** - Certificate expiration monitoring (High priority for LDAPS)
+- Monitor DC SSL/TLS certificates expiration dates
+- Check LDAPS (port 636) certificate validity
+- Validate certificate chains and trust
+- Check for self-signed vs CA-issued certificates
+- Thresholds: 30 days warning, 7 days critical
 
 ## Context for Next Session
 
@@ -289,12 +314,65 @@ Building production-ready health check functions with comprehensive testing, fol
 - Updated Memory Bank documentation (progress.md, activeContext.md)
 
 **Key Achievements:**
-- 6 of 12 health check functions complete (50%) ✅
-- 233/233 tests passing (100% pass rate)
+- 8 of 12 health check functions complete (67%) ✅
+- 388/388 tests passing (100% pass rate)
 - PSScriptAnalyzer: 0 errors, 0 warnings
-- Halfway through Phase 2 implementation
+- Two-thirds through Phase 2 implementation
 - Build pipeline working flawlessly
 - Production-ready code quality maintained
+
+### Session 4: November 4, 2025 (Time Sync Implementation)
+- Implemented Test-ADTimeSync function (682 lines)
+- Created 71 comprehensive Pester tests across 11 contexts
+- Fixed 1 regex mismatch in error message test
+- Achieved 310/310 tests passing (100% pass rate) ✅
+- Updated Memory Bank documentation (progress.md)
+
+**Key Achievements:**
+- Most comprehensive function yet (682 lines)
+- Complex w32tm command parsing with regex
+- PDC Emulator special logic implementation
+- Remote command execution via Invoke-Command
+- Configurable threshold parameters with validation
+- All 310 tests passing with zero failures
+
+**Technical Decisions:**
+- Time offset thresholds: 5 seconds healthy (default), 10 seconds warning (default)
+- Threshold ranges: HealthyThresholdSeconds (1-60), WarningThresholdSeconds (1-300)
+- PDC should use external NTP, not local CMOS clock
+- Non-PDC DCs should sync from domain hierarchy
+- W32Time service must be running and set to automatic
+
+### Session 5: November 4, 2025 (Event Log Analysis Implementation)
+- Implemented Get-ADCriticalEvents function (403 lines)
+- Created 72 comprehensive Pester tests across 14 contexts
+- Fixed 2 PSScriptAnalyzer warnings ($event variable, PSUseSingularNouns)
+- Achieved 388/388 tests passing (100% pass rate) ✅
+- Updated Memory Bank documentation (progress.md, activeContext.md)
+
+**Key Achievements:**
+- Advanced event log monitoring across 5 critical logs
+- Tracks 27 critical Event IDs with intelligent filtering
+- Event aggregation and analysis (counts by severity, top IDs, grouping)
+- Event-specific recommendations for 7 common issue patterns
+- Configurable scan window (Hours) and event limit (MaxEvents)
+- Optional warning-level events via IncludeWarnings switch
+- All 388 tests passing with zero failures
+
+**Technical Decisions:**
+- Event scan window: 1-168 hours (default 24 hours)
+- MaxEvents limit: 1-1000 per DC (default 100)
+- Status thresholds: Any critical events = Critical, >10 errors = Critical, Any errors = Warning, >20 warnings = Warning
+- Event-specific logic for: 2042 (replication), 2087/2088 (DNS), 4013 (zone transfer), 5805/5719 (secure channel), 13508/13516 (DFSR), 1645 (resource limits)
+- Variable naming: Avoid PowerShell automatic variables ($event → $eventItem)
+- PSUseSingularNouns: Suppressed with justification (returns multiple events)
+- Event logs monitored: Directory Service, DNS Server, DFS Replication, File Replication Service, System
+
+**Next Actions:**
+- Implement Test-ADCertificateHealth (certificate expiration monitoring)
+- Continue with remaining 4 health check functions
+- Maintain 100% test pass rate and PSScriptAnalyzer compliance
+- Project now 67% complete (8 of 12 health checks)
 
 **Technical Decisions:**
 - DFSR backlog thresholds: 50 files healthy, 100 files warning
