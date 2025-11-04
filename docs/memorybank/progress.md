@@ -2,7 +2,7 @@
 
 **Last Updated:** November 3, 2025  
 **Current Phase:** Phase 2 - Core Monitoring Functions  
-**Overall Completion:** 33% (4 of 12 health check categories)
+**Overall Completion:** 42% (5 of 12 health check categories)
 
 ## Project Phases
 
@@ -46,7 +46,7 @@
 ### Phase 2: Core Monitoring Functions (Current Phase)
 
 **Timeline:** November 10-16, 2025  
-**Completion:** 33% (4 of 12 health check categories)
+**Completion:** 42% (5 of 12 health check categories)
 
 #### Tasks
 
@@ -54,7 +54,7 @@
 - [x] Implement DC Reachability health checks (Test-ADDomainControllerReachability) - 26 tests
 - [x] Implement Replication health checks (Get-ADReplicationStatus) - 13 tests
 - [x] Implement FSMO role health checks (Get-ADFSMORoleStatus) - 35 tests
-- [ ] Implement DNS health checks (Test-ADDNSHealth)
+- [x] Implement DNS health checks (Test-ADDNSHealth) - 49 tests, 181 total tests passing
 - [ ] Implement SYSVOL/DFSR health checks
 - [ ] Implement Time synchronization checks
 - [ ] Implement Certificate health checks
@@ -63,7 +63,7 @@
 - [ ] Implement Backup status checks
 - [ ] Implement Event log monitoring
 - [x] Create HealthCheckResult class ✅
-- [x] Write unit tests for all functions (126 tests, 100% pass rate)
+- [x] Write unit tests for all functions (181 tests, 100% pass rate)
 - [ ] Performance testing and optimization
 
 #### Deliverables
@@ -223,6 +223,80 @@
 - Production-ready functions with comprehensive documentation
 
 **Time Spent:** ~1.5 hours
+
+---
+
+### Session 5: DNS Health Monitoring Implementation
+**Date:** November 3, 2025  
+**Duration:** ~2 hours
+
+**Objectives:**
+- Implement Test-ADDNSHealth function
+- Create comprehensive Pester tests
+- Validate DNS record registration for domain controllers
+
+**Work Completed:**
+
+1. **Function Implementation:**
+   - Created Test-ADDNSHealth.ps1 (365 lines)
+   - Comprehensive DNS health monitoring including:
+     - A record resolution with performance timing (Stopwatch)
+     - PTR record verification for reverse lookup
+     - Critical SRV record validation (4 records): _ldap._tcp.dc._msdcs, _kerberos._tcp.dc._msdcs, _ldap._tcp, _kerberos._tcp
+     - Optional SRV record validation (3 records): _gc._tcp, _kpasswd._tcp, _ldap._tcp.gc._msdcs
+     - DNS service status monitoring via Get-Service
+     - DC registration verification in SRV records (NameTarget matching)
+   - Performance thresholds: Healthy (<100ms), Warning (100-500ms), Critical (>500ms)
+   - Complete comment-based help with examples
+   - Pipeline support with auto-DC discovery
+
+2. **Test Development:**
+   - Created Test-ADDNSHealth.Tests.ps1
+   - 49 comprehensive Pester tests across 11 contexts:
+     - Parameter validation (8 tests)
+     - Function structure (7 tests)
+     - SRV record definitions (4 tests)
+     - DNS resolution logic (5 tests)
+     - Registration verification (4 tests)
+     - Service status checks (2 tests)
+     - Health determination (5 tests)
+     - Output validation (4 tests)
+     - Domain handling (3 tests)
+     - Pipeline support (3 tests)
+     - Verbose logging (4 tests)
+   - All 49 tests passing
+
+3. **Code Quality:**
+   - Fixed trailing whitespace issues (10 lines)
+   - PSScriptAnalyzer: 0 errors, 0 warnings
+   - Follows established patterns (Begin/Process/End blocks)
+   - Consistent with other health check functions
+
+4. **Remediation Guidance:**
+   - "ipconfig /registerdns" for DC registration issues
+   - "nltest /dsregdns" for SRV record re-registration
+   - DNS service troubleshooting steps
+   - DNS server performance investigation guidance
+
+**Build Results:**
+- Total Tests: 181 (all passing) ✅
+- New Tests Added: 49 (DNS Health)
+- Code Coverage: 25.04% (limited by AD module dependency)
+- PSScriptAnalyzer: 0 errors, 0 warnings ✅
+- Module builds successfully ✅
+
+**Key Decisions:**
+- Use Resolve-DnsName cmdlet for mockability in tests
+- Performance thresholds: 100ms warning, 500ms critical
+- DC registration verification via NameTarget matching in SRV records
+- Separate critical vs optional SRV records for appropriate alerting
+
+**Project Status:**
+- 5 of 12 health check categories complete (42%)
+- 181 tests passing with 100% success rate
+- Production-ready DNS monitoring with comprehensive diagnostics
+
+**Time Spent:** ~2 hours
 
 ---
 

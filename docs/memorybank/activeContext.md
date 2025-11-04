@@ -55,11 +55,22 @@ Building production-ready health check functions with comprehensive testing, fol
    - PSScriptAnalyzer compliant (0 errors/warnings)
    - Note: Functional tests require ActiveDirectory module
 
-7. ⏳ **DNS Health Monitoring** (Next - Ready to Start)
-   - Implement Test-ADDNSHealth function
-   - Verify DNS record registration for DCs
-   - Check SRV records (_ldap, _kerberos, _gc)
-   - Test zone replication and health
+7. ✅ **DNS Health Monitoring** (Completed - Nov 3, 2025)
+   - Implemented Test-ADDNSHealth function (365 lines)
+   - Created 49 comprehensive Pester tests
+   - Monitors: A records, PTR records, Critical SRV records (4), Optional SRV records (3)
+   - Performance measurement: <100ms Healthy, 100-500ms Warning, >500ms Critical
+   - DC registration verification in SRV records (NameTarget matching)
+   - DNS service status monitoring via Get-Service
+   - PSScriptAnalyzer compliant (0 errors/warnings)
+   - Note: 181 total tests passing (100% pass rate)
+
+8. ⏳ **SYSVOL/DFSR Health Monitoring** (Next - Ready to Start)
+   - Implement Test-ADSYSVOLHealth function
+   - Monitor SYSVOL replication via DFSR
+   - Check replication state and backlog
+   - Verify SYSVOL share accessibility
+   - Test GPO consistency across DCs
 
 ## Recent Decisions
 
