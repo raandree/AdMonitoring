@@ -135,6 +135,7 @@ function Send-ADHealthReport {
     #>
     [CmdletBinding(SupportsShouldProcess)]
     [OutputType([void])]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '', Justification = 'Write-Host used intentionally for user feedback on email delivery status')]
     param(
         [Parameter(Mandatory, ValueFromPipeline)]
         [ValidateNotNullOrEmpty()]

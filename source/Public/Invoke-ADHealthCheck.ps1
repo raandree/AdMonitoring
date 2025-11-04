@@ -116,6 +116,7 @@ function Invoke-ADHealthCheck {
     #>
     [CmdletBinding(DefaultParameterSetName = 'All')]
     [OutputType([PSCustomObject[]])]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '', Justification = 'Write-Host used intentionally for interactive console summary display with color formatting')]
     param(
         [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [Alias('DomainController', 'DC', 'Server')]
