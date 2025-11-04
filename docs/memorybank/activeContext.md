@@ -308,6 +308,41 @@ $results | Send-ADHealthReport -To team@contoso.com -SmtpServer localhost
 - `systemPatterns.md` - AD monitoring patterns and architecture
 - `progress.md` - Complete implementation tracking
 
+## Recent Changes (November 4, 2025 - Session 8)
+
+### Azure Pipelines YAML Update
+**Task:** Remove all stages running on macOS or Linux  
+**Date:** November 4, 2025, 5:23 PM
+
+**Changes Made:**
+1. **Build Stage** - Changed `Package_Module` from `ubuntu-latest` to `windows-latest`
+2. **Test Stage** - Removed `test_linux` job (ubuntu-latest)
+3. **Test Stage** - Removed `test_macos` job (macos-latest)
+4. **Test Stage** - Updated `Code_Coverage` job dependencies (removed macOS/Linux dependencies)
+5. **Test Stage** - Changed `Code_Coverage` from `ubuntu-latest` to `windows-latest`
+6. **Test Stage** - Removed download steps for macOS/Linux test artifacts
+7. **Deploy Stage** - Changed `Deploy_Module` from `ubuntu-latest` to `windows-latest`
+
+**Remaining Test Jobs (Windows Only):**
+- `test_windows_core` - PowerShell 7 on Windows
+- `test_windows_ps` - Windows PowerShell 5.1 on Windows
+
+**Rationale:**
+- AdMonitoring module targets Windows Server Active Directory environments
+- All functions require Windows-specific cmdlets (ActiveDirectory module)
+- Testing on macOS/Linux not applicable for AD-focused module
+- Simplifies CI/CD pipeline and reduces build time
+- All stages now run on `windows-latest` agents
+
+**Impact:**
+- Faster pipeline execution (fewer parallel jobs)
+- Reduced Azure DevOps minute consumption
+- More focused testing on target platform
+- No functionality impact (module was Windows-only by design)
+
+**Files Modified:**
+- `azure-pipelines.yml` - Complete pipeline configuration update
+
 ## Current Status: PRODUCTION READY ✅
 
 **Module Version:** 0.1.0  
@@ -315,6 +350,7 @@ $results | Send-ADHealthReport -To team@contoso.com -SmtpServer localhost
 **All Quality Gates:** PASSED ✅  
 **Documentation:** COMPLETE ✅  
 **Testing:** 100% PASSING ✅  
-**Code Quality:** EXCELLENT ✅
+**Code Quality:** EXCELLENT ✅  
+**CI/CD Pipeline:** Windows-only execution ✅
 
 The AdMonitoring module is ready for production deployment and use.
