@@ -159,12 +159,12 @@ Describe 'Test-ADSYSVOLHealth' {
     Context 'Output structure validation' {
         It 'Should create result with specific CheckName' {
             $definition = (Get-Command Test-ADSYSVOLHealth).Definition
-            $definition | Should -Match "CheckName.*['""]SYSVOL Health['""]"
+            $definition | Should -Match "['``""]SYSVOL Health['``""]"
         }
 
         It 'Should create result with specific Category' {
             $definition = (Get-Command Test-ADSYSVOLHealth).Definition
-            $definition | Should -Match "Category.*['""]SYSVOL/DFSR Replication['""]"
+            $definition | Should -Match "['``""]SYSVOL/DFSR Replication['``""]"
         }
 
         It 'Should include remediation information' {

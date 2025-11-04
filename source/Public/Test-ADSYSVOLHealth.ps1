@@ -196,12 +196,6 @@ function Test-ADSYSVOLHealth {
                     # Test 4: Replication Backlog
                     Write-Verbose "Checking DFSR replication backlog"
                     try {
-                        # Attempt to get replication partners
-                        $partnerParams = @{
-                            ComputerName = $computer
-                            ErrorAction  = 'Stop'
-                        }
-
                         # Use Invoke-Command to run Get-DfsrBacklog on remote DC
                         $scriptBlock = {
                             $backlogTotal = 0
@@ -230,7 +224,8 @@ function Test-ADSYSVOLHealth {
                                         }
                                     }
                                     catch {
-                                        # Silently continue if backlog check fails for a partner
+                                        # Backlog check failed for this partner - continue to next
+                                        Write-Verbose "Failed to get backlog for partner $($connection.PartnerName): $_"
                                     }
                                 }
                             }
