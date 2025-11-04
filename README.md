@@ -40,17 +40,92 @@ AdMonitoring provides enterprise-grade health checks for Active Directory enviro
   - Critical: > 60 minutes or any failures
 - Optional detailed partner information
 
-### 🚧 Planned Health Checks
+#### 4. FSMO Role Availability (`Get-ADFSMORoleStatus`)
+- All 5 FSMO roles: Schema Master, Domain Naming Master, RID Master, PDC Emulator, Infrastructure Master
+- Seized role detection and warnings
+- Role holder reachability verification
+- Domain and forest-level role checks
 
-- FSMO Role Availability
-- DNS Health
-- SYSVOL/DFSR Health
-- Time Synchronization
-- Database/Log Health
-- Security Configuration
-- Certificate Health
-- Network Configuration
-- Performance Metrics
+#### 5. DNS Health (`Test-ADDNSHealth`)
+- SRV record validation for AD services
+- A and PTR record checks
+- DNS service status monitoring
+- Zone health and configuration
+
+#### 6. SYSVOL/DFSR Health (`Test-ADSYSVOLHealth`)
+- SYSVOL accessibility checks
+- DFSR backlog monitoring
+- Replication lag detection
+- Share permissions validation
+
+#### 7. Time Synchronization (`Test-ADTimeSync`)
+- W32Time service monitoring
+- Time offset calculations
+- PDC Emulator special handling
+- NTP configuration validation
+
+#### 8. Performance Metrics (`Get-ADDomainControllerPerformance`)
+- CPU and memory utilization
+- Disk space monitoring
+- NTDS.dit database size tracking
+- Performance counter collection
+
+#### 9. Security Health (`Test-ADSecurityHealth`)
+- Secure channel testing
+- Trust relationship monitoring
+- Account lockout tracking
+- Failed authentication analysis
+- NTLM usage monitoring
+
+#### 10. Database Health (`Test-ADDatabaseHealth`)
+- NTDS.dit integrity checks
+- Garbage collection monitoring
+- Version store health
+- Tombstone lifetime validation
+
+#### 11. Event Log Analysis (`Get-ADCriticalEvents`)
+- 27 critical Event IDs across 5 event logs
+- Replication, authentication, and system events
+- Event-specific recommendations
+- Configurable scan windows
+
+#### 12. Certificate Health (`Test-ADCertificateHealth`)
+- Certificate expiration monitoring
+- LDAPS connectivity validation
+- CA health checks
+- Certificate store enumeration
+
+### ✅ Reporting & Orchestration
+
+#### Master Orchestration (`Invoke-ADHealthCheck`)
+- Run all 12 health checks with single command
+- Auto-discovery of domain controllers
+- Selective category execution
+- Integrated report generation
+- Console summary display
+- Fail-safe execution
+
+#### HTML Report Generation (`New-ADHealthReport`)
+- Professional styling with embedded CSS
+- Color-coded status indicators
+- Executive summary dashboard
+- Detailed findings by category
+- Company branding support
+- Browser integration with -Show switch
+
+#### Email Delivery (`Send-ADHealthReport`)
+- Three body formats: Text, Html, Attachment
+- SSL/TLS support
+- Authenticated SMTP
+- Multiple recipients
+- Office 365 and Gmail examples
+
+#### Data Export (`Export-ADHealthData`)
+- Four formats: JSON, CSV, XML, CLIXML
+- Smart format detection
+- GZip compression
+- Metadata inclusion
+- Append mode for incremental collection
 
 ## Installation
 
@@ -76,7 +151,84 @@ Import-Module .\output\module\AdMonitoring\AdMonitoring.psd1
 
 ## Quick Start
 
-### Check AD Service Status
+### Run Complete Health Check (Recommended)
+
+```powershell
+# Run all health checks with a single command and generate HTML report
+Invoke-ADHealthCheck -GenerateReport
+
+# Run specific categories only
+Invoke-ADHealthCheck -Category Replication,DNS,SYSVOL
+
+# Target specific domain controllers
+Invoke-ADHealthCheck -ComputerName DC01,DC02 -GenerateReport
+```
+
+### Generate Professional HTML Reports
+
+```powershell
+# Run checks and create report
+$results = Invoke-ADHealthCheck
+New-ADHealthReport -HealthCheckResults $results -Show
+
+# Save report to specific location
+New-ADHealthReport -HealthCheckResults $results -OutputPath C:\Reports\AD-Health.html -Show
+
+# Include healthy checks and add company branding
+New-ADHealthReport -HealthCheckResults $results `
+    -IncludeHealthyChecks `
+    -CompanyName "Contoso Ltd" `
+    -CompanyLogo "https://contoso.com/logo.png" `
+    -Show
+```
+
+### Send Email Reports
+
+```powershell
+# Send plain text summary
+$results = Invoke-ADHealthCheck
+Send-ADHealthReport -HealthCheckResults $results `
+    -To 'admin@contoso.com' `
+    -From 'monitoring@contoso.com' `
+    -SmtpServer 'localhost'
+
+# Send HTML report via Office 365
+Send-ADHealthReport -HealthCheckResults $results `
+    -To 'team@contoso.com' `
+    -From 'admon@contoso.com' `
+    -SmtpServer 'smtp.office365.com' `
+    -Port 587 -UseSsl `
+    -Credential (Get-Credential) `
+    -BodyFormat Html `
+    -Priority High
+
+# Send with HTML attachment
+Send-ADHealthReport -HealthCheckResults $results `
+    -To 'admin@contoso.com' `
+    -From 'monitoring@contoso.com' `
+    -SmtpServer 'localhost' `
+    -BodyFormat Attachment
+```
+
+### Export Data for Analysis
+
+```powershell
+# Export to JSON
+Invoke-ADHealthCheck | Export-ADHealthData -Path .\AD-Health.json -IncludeMetadata
+
+# Export to CSV for Excel
+Invoke-ADHealthCheck | Export-ADHealthData -Path .\AD-Health.csv
+
+# Export to compressed JSON
+Invoke-ADHealthCheck | Export-ADHealthData -Path .\AD-Health.json -Compress
+
+# Export with full PowerShell object preservation
+Invoke-ADHealthCheck | Export-ADHealthData -Path .\AD-Health.clixml
+```
+
+### Individual Health Checks
+
+#### Check AD Service Status
 
 ```powershell
 # Check all DCs in the domain
@@ -267,13 +419,33 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Version History
 
-### v0.1.0 (In Development)
-- ✅ Core health check framework (HealthCheckResult class)
-- ✅ Service status monitoring
-- ✅ Domain controller reachability testing
-- ✅ AD replication status monitoring
-- 🚧 FSMO role availability (planned)
-- 🚧 HTML report generation (planned)
+### v0.1.0 (Current)
+**Core Monitoring Functions (12/12 Complete)**
+- ✅ Service status monitoring (`Get-ADServiceStatus`)
+- ✅ Domain controller reachability (`Test-ADDomainControllerReachability`)
+- ✅ AD replication status (`Get-ADReplicationStatus`)
+- ✅ FSMO role availability (`Get-ADFSMORoleStatus`)
+- ✅ DNS health checks (`Test-ADDNSHealth`)
+- ✅ SYSVOL/DFSR monitoring (`Test-ADSYSVOLHealth`)
+- ✅ Time synchronization (`Test-ADTimeSync`)
+- ✅ Performance metrics (`Get-ADDomainControllerPerformance`)
+- ✅ Security health (`Test-ADSecurityHealth`)
+- ✅ Database health (`Test-ADDatabaseHealth`)
+- ✅ Event log analysis (`Get-ADCriticalEvents`)
+- ✅ Certificate health (`Test-ADCertificateHealth`)
+
+**Reporting & Orchestration (4 Functions)**
+- ✅ Master orchestration (`Invoke-ADHealthCheck`)
+- ✅ HTML report generation (`New-ADHealthReport`)
+- ✅ Email delivery (`Send-ADHealthReport`)
+- ✅ Multi-format export (`Export-ADHealthData`)
+
+**Module Statistics**
+- 16 public functions
+- 562 unit tests (100% passing)
+- PSScriptAnalyzer compliant
+- 6,400+ lines of code
+- Production-ready
 
 ## Authors
 
