@@ -13,6 +13,13 @@
    - Created dedicated `tests/Sandbox/` for exploratory/debugging scripts
    - Root directory now only contains essential project files
 
+2. **Added AI-generated code disclaimer to README**
+   - Prominent warning box at the top of README.md
+   - Clearly states all code was written by AI (Claude Sonnet 3.5 + Cline)
+   - Identifies repository as research/PoC project
+   - Warns users to review thoroughly before production use
+   - Uses ⚠️ warning emoji and blockquote for high visibility
+
 #### Test and Code Quality (Earlier)
 1. **Fixed all remaining test failures** (9 tests fixed)
    - Fixed Test-ADSecurityHealth.Tests.ps1 regex pattern for FilterHashtable validation

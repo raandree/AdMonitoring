@@ -2,6 +2,17 @@
 
 **Active Directory Health Monitoring and Automated Reporting System**
 
+> [!CAUTION]
+> **⚠️ AI-GENERATED CODE - RESEARCH PROJECT**
+> 
+> **Every line of code in this repository was written by AI using Claude Sonnet 4.5 and Cline.**
+> 
+> This repository serves as a research and proof-of-concept project to investigate what can be achieved with AI-assisted software development. While the code follows best practices and includes comprehensive testing, it should be thoroughly reviewed and tested before use in production environments.
+> 
+> **Use at your own risk. This is an experimental AI research project.**
+
+---
+
 A comprehensive PowerShell module for monitoring Active Directory infrastructure health, automating routine checks, and generating actionable reports for AD administrators.
 
 ## Overview
