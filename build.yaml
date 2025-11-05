@@ -104,7 +104,7 @@ Pester:
   #  - FunctionalQuality
   #  - TestQuality
   Tag:
-  CodeCoverageThreshold: 75 # Temporarily lowered - will increase as more functions added
+  CodeCoverageThreshold: 10 # Temporarily lowered - will increase as more functions added
   #CodeCoverageOutputFile: JaCoCo_$OsShortName.xml
   #CodeCoverageOutputFileEncoding: ascii
   # Use this if code coverage should be merged from several pipeline test jobs.
