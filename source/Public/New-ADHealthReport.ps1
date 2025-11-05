@@ -364,9 +364,10 @@ function New-ADHealthReport {
         Write-Verbose "Filtered to $($filteredResults.Count) results for report"
 
         # Calculate summary statistics
-        $criticalCount = ($allResults | Where-Object { $_.Status -eq 'Critical' }).Count
-        $warningCount = ($allResults | Where-Object { $_.Status -eq 'Warning' }).Count
-        $healthyCount = ($allResults | Where-Object { $_.Status -eq 'Healthy' }).Count
+        # Note: Wrap in @() to ensure .Count works in PowerShell 5.1 (returns null for single items)
+        $criticalCount = @($allResults | Where-Object { $_.Status -eq 'Critical' }).Count
+        $warningCount = @($allResults | Where-Object { $_.Status -eq 'Warning' }).Count
+        $healthyCount = @($allResults | Where-Object { $_.Status -eq 'Healthy' }).Count
         $totalChecks = $allResults.Count
 
         # Determine overall health status

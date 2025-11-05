@@ -120,7 +120,9 @@ function Test-ADDomainControllerReachability {
                 if ($testResults.DnsResolution) {
                     Write-Verbose "Testing ICMP ping to $computer"
                     try {
-                        $pingResult = Test-Connection -ComputerName $computer -Count 2 -Quiet -TimeoutSeconds $Timeout -ErrorAction Stop
+                        # Note: PowerShell 5.1 doesn't have -TimeoutSeconds parameter
+                        # Using -Count 2 which typically completes within a few seconds
+                        $pingResult = Test-Connection -ComputerName $computer -Count 2 -Quiet -ErrorAction Stop
                         $testResults.Ping = $pingResult
                         if ($pingResult) {
                             Write-Verbose "Ping successful"
@@ -252,8 +254,9 @@ function Test-ADDomainControllerReachability {
         if (-not $pipelineInputReceived) {
             try {
                 Write-Verbose "No ComputerName specified, retrieving all domain controllers"
-                $allDCs = Get-ADDomainController -Filter * -ErrorAction Stop |
-                    Select-Object -ExpandProperty HostName
+                # Wrap in @() to ensure .Count works in PowerShell 5.1
+                $allDCs = @(Get-ADDomainController -Filter * -ErrorAction Stop |
+                    Select-Object -ExpandProperty HostName)
                 Write-Verbose "Found $($allDCs.Count) domain controller(s)"
 
                 # Call the function recursively with the discovered DCs
