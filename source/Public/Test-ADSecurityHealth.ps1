@@ -253,23 +253,26 @@ function Test-ADSecurityHealth {
                 # Scan security event logs
                 Write-Verbose "Scanning security event logs on $dc"
                 try {
-                    $eventParams = @{
-                        ComputerName      = $dc
-                        FilterHashtable   = @{
-                            LogName   = 'Security'
-                            StartTime = $startTime
-                        }
-                        ErrorAction       = 'Stop'
-                        MaxEvents         = 10000
-                        WarningAction     = 'SilentlyContinue'
+                    # Base parameters for event queries
+                    $baseEventParams = @{
+                        ComputerName  = $dc
+                        ErrorAction   = 'Stop'
+                        WarningAction = 'SilentlyContinue'
                     }
 
                     if ($PSBoundParameters.ContainsKey('Credential')) {
-                        $eventParams['Credential'] = $Credential
+                        $baseEventParams['Credential'] = $Credential
                     }
 
                     # Event ID 4740: Account lockout
-                    $lockoutEvents = @(Get-WinEvent @eventParams | Where-Object { $_.Id -eq 4740 })
+                    Write-Verbose "Querying account lockout events (ID 4740)"
+                    $lockoutParams = $baseEventParams.Clone()
+                    $lockoutParams['FilterHashtable'] = @{
+                        LogName   = 'Security'
+                        Id        = 4740
+                        StartTime = $startTime
+                    }
+                    $lockoutEvents = @(Get-WinEvent @lockoutParams)
                     $details.AccountLockouts = $lockoutEvents.Count
 
                     if ($lockoutEvents.Count -gt 0) {
@@ -300,7 +303,14 @@ function Test-ADSecurityHealth {
                     }
 
                     # Event ID 4625: Failed authentication attempts
-                    $failedAuthEvents = @(Get-WinEvent @eventParams | Where-Object { $_.Id -eq 4625 })
+                    Write-Verbose "Querying failed authentication events (ID 4625)"
+                    $failedAuthParams = $baseEventParams.Clone()
+                    $failedAuthParams['FilterHashtable'] = @{
+                        LogName   = 'Security'
+                        Id        = 4625
+                        StartTime = $startTime
+                    }
+                    $failedAuthEvents = @(Get-WinEvent @failedAuthParams)
                     $details.FailedAuthentications = $failedAuthEvents.Count
 
                     if ($failedAuthEvents.Count -gt 0) {
@@ -331,12 +341,26 @@ function Test-ADSecurityHealth {
                     }
 
                     # Event ID 4768: Kerberos TGT requested
-                    $kerberosEvents = @(Get-WinEvent @eventParams | Where-Object { $_.Id -eq 4768 })
+                    Write-Verbose "Querying Kerberos ticket request events (ID 4768)"
+                    $kerberosParams = $baseEventParams.Clone()
+                    $kerberosParams['FilterHashtable'] = @{
+                        LogName   = 'Security'
+                        Id        = 4768
+                        StartTime = $startTime
+                    }
+                    $kerberosEvents = @(Get-WinEvent @kerberosParams)
                     $details.KerberosTicketRequests = $kerberosEvents.Count
                     Write-Verbose "Found $($kerberosEvents.Count) Kerberos ticket requests"
 
                     # Event ID 4776: NTLM authentication
-                    $ntlmEvents = @(Get-WinEvent @eventParams | Where-Object { $_.Id -eq 4776 })
+                    Write-Verbose "Querying NTLM authentication events (ID 4776)"
+                    $ntlmParams = $baseEventParams.Clone()
+                    $ntlmParams['FilterHashtable'] = @{
+                        LogName   = 'Security'
+                        Id        = 4776
+                        StartTime = $startTime
+                    }
+                    $ntlmEvents = @(Get-WinEvent @ntlmParams)
                     $details.NTLMAuthentications = $ntlmEvents.Count
                     Write-Verbose "Found $($ntlmEvents.Count) NTLM authentication events"
 

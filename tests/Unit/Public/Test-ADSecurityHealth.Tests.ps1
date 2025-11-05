@@ -458,29 +458,35 @@ Describe 'Test-ADSecurityHealth' {
             $definition | Should -Match 'StartTime\s*=\s*\$startTime'
         }
 
-        It 'Should limit max events to 10000' {
+        It 'Should filter for Event ID 4740 (lockouts) in FilterHashtable' {
             $definition = (Get-Command Test-ADSecurityHealth).Definition
-            $definition | Should -Match 'MaxEvents\s*=\s*10000'
+            $definition | Should -Match "Id\s*=\s*4740"
         }
 
-        It 'Should filter for Event ID 4740 (lockouts)' {
+        It 'Should filter for Event ID 4625 (failed auth) in FilterHashtable' {
             $definition = (Get-Command Test-ADSecurityHealth).Definition
-            $definition | Should -Match 'Id -eq 4740'
+            $definition | Should -Match "Id\s*=\s*4625"
         }
 
-        It 'Should filter for Event ID 4625 (failed auth)' {
+        It 'Should filter for Event ID 4768 (Kerberos) in FilterHashtable' {
             $definition = (Get-Command Test-ADSecurityHealth).Definition
-            $definition | Should -Match 'Id -eq 4625'
+            $definition | Should -Match "Id\s*=\s*4768"
         }
 
-        It 'Should filter for Event ID 4768 (Kerberos)' {
+        It 'Should filter for Event ID 4776 (NTLM) in FilterHashtable' {
             $definition = (Get-Command Test-ADSecurityHealth).Definition
-            $definition | Should -Match 'Id -eq 4768'
+            $definition | Should -Match "Id\s*=\s*4776"
         }
 
-        It 'Should filter for Event ID 4776 (NTLM)' {
+        It 'Should NOT use Where-Object for Event ID filtering' {
             $definition = (Get-Command Test-ADSecurityHealth).Definition
-            $definition | Should -Match 'Id -eq 4776'
+            $definition | Should -Not -Match 'Get-WinEvent.*\|.*Where-Object.*\.Id -eq'
+        }
+
+        It 'Should use efficient FilterHashtable-based filtering' {
+            $definition = (Get-Command Test-ADSecurityHealth).Definition
+            # Verify we're using FilterHashtable with Id property
+            $definition | Should -Match "FilterHashtable\s*=\s*@\{[^}]*Id\s*="
         }
     }
 

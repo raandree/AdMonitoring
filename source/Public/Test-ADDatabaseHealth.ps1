@@ -277,6 +277,7 @@ function Test-ADDatabaseHealth {
                     ComputerName = $dc
                     FilterHashtable = @{
                         LogName = 'Directory Service'
+                        Id = $databaseEventIds.Keys
                         StartTime = $startTime
                     }
                     ErrorAction = 'SilentlyContinue'
@@ -286,9 +287,8 @@ function Test-ADDatabaseHealth {
                     $eventParams['Credential'] = $Credential
                 }
 
-                $events = Get-WinEvent @eventParams | Where-Object {
-                    $_.Id -in $databaseEventIds.Keys
-                }
+                Write-Verbose "Querying database events (IDs: $($databaseEventIds.Keys -join ', '))"
+                $events = Get-WinEvent @eventParams
 
                 if ($events) {
                     foreach ($event in $events) {

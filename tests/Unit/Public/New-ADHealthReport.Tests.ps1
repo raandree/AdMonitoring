@@ -70,10 +70,10 @@ Describe 'New-ADHealthReport' {
             $help.Examples.Example.Count | Should -BeGreaterOrEqual 2
         }
 
-        It 'Should return string type' {
+        It 'Should return FileInfo type' {
             $command = Get-Command New-ADHealthReport
             $outputType = $command.OutputType.Name
-            $outputType | Should -Match 'String'
+            $outputType | Should -Match 'FileInfo'
         }
 
         It 'Should have notes section' {
@@ -156,19 +156,22 @@ Describe 'New-ADHealthReport' {
             )
         }
 
-        It 'Should generate HTML output as string when OutputPath not specified' {
-            $html = New-ADHealthReport -HealthCheckResults $mockResults
-            $html | Should -Not -BeNullOrEmpty
-            $html | Should -BeOfType [string]
+        It 'Should generate HTML output and save to temp file when OutputPath not specified' {
+            $fileInfo = New-ADHealthReport -HealthCheckResults $mockResults
+            $fileInfo | Should -Not -BeNullOrEmpty
+            $fileInfo | Should -BeOfType [System.IO.FileInfo]
+            Test-Path $fileInfo.FullName | Should -Be $true
         }
 
         It 'Should contain HTML DOCTYPE declaration' {
-            $html = New-ADHealthReport -HealthCheckResults $mockResults
+            $fileInfo = New-ADHealthReport -HealthCheckResults $mockResults
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match '<!DOCTYPE html>'
         }
 
         It 'Should contain HTML structure tags' {
-            $html = New-ADHealthReport -HealthCheckResults $mockResults
+            $fileInfo = New-ADHealthReport -HealthCheckResults $mockResults
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match '<html'
             $html | Should -Match '<head>'
             $html | Should -Match '<body>'
@@ -176,26 +179,30 @@ Describe 'New-ADHealthReport' {
         }
 
         It 'Should contain CSS styles' {
-            $html = New-ADHealthReport -HealthCheckResults $mockResults
+            $fileInfo = New-ADHealthReport -HealthCheckResults $mockResults
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match '<style>'
             $html | Should -Match 'font-family:'
             $html | Should -Match 'background-color:'
         }
 
         It 'Should include executive summary section' {
-            $html = New-ADHealthReport -HealthCheckResults $mockResults
+            $fileInfo = New-ADHealthReport -HealthCheckResults $mockResults
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match 'executive-summary'
             $html | Should -Match 'Executive Summary'
         }
 
         It 'Should display overall status' {
-            $html = New-ADHealthReport -HealthCheckResults $mockResults
+            $fileInfo = New-ADHealthReport -HealthCheckResults $mockResults
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match 'Overall Status:'
             $html | Should -Match 'Critical|Warning|Healthy'
         }
 
         It 'Should include summary statistics' {
-            $html = New-ADHealthReport -HealthCheckResults $mockResults
+            $fileInfo = New-ADHealthReport -HealthCheckResults $mockResults
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match 'Total Checks'
             $html | Should -Match 'Critical Issues'
             $html | Should -Match 'Warnings'
@@ -203,18 +210,21 @@ Describe 'New-ADHealthReport' {
         }
 
         It 'Should show correct count for critical issues' {
-            $html = New-ADHealthReport -HealthCheckResults $mockResults
+            $fileInfo = New-ADHealthReport -HealthCheckResults $mockResults
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match '<span class=.stat-number.>1</span>[\s\S]*?<span class=.stat-label.>Critical Issues</span>'
         }
 
         It 'Should show correct count for warnings' {
-            $html = New-ADHealthReport -HealthCheckResults $mockResults
+            $fileInfo = New-ADHealthReport -HealthCheckResults $mockResults
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match '<span class=.stat-number.>1</span>[\s\S]*?<span class=.stat-label.>Warnings</span>'
         }
 
        It 'Should group results by category' {
             # Only non-healthy checks appear by default
-            $html = New-ADHealthReport -HealthCheckResults $mockResults
+            $fileInfo = New-ADHealthReport -HealthCheckResults $mockResults
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match '<h2>Replication</h2>'
             $html | Should -Match '<h2>Performance</h2>'
             # Services category excluded because it's healthy
@@ -222,7 +232,8 @@ Describe 'New-ADHealthReport' {
 
         It 'Should include check names' {
             # Only non-healthy checks appear by default
-            $html = New-ADHealthReport -HealthCheckResults $mockResults
+            $fileInfo = New-ADHealthReport -HealthCheckResults $mockResults
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match 'ReplicationHealth'
             $html | Should -Match 'DiskSpace'
             # ServiceStatus excluded because it's healthy
@@ -230,7 +241,8 @@ Describe 'New-ADHealthReport' {
 
         It 'Should include status badges' {
             # Only non-healthy checks appear by default
-            $html = New-ADHealthReport -HealthCheckResults $mockResults
+            $fileInfo = New-ADHealthReport -HealthCheckResults $mockResults
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match 'status-badge warning'
             $html | Should -Match 'status-badge critical'
             # Healthy badge not in detailed section by default
@@ -238,27 +250,31 @@ Describe 'New-ADHealthReport' {
 
         It 'Should include target information for non-healthy checks' {
             # Only non-healthy checks appear by default
-            $html = New-ADHealthReport -HealthCheckResults $mockResults
+            $fileInfo = New-ADHealthReport -HealthCheckResults $mockResults
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match 'DC02.contoso.com'
             $html | Should -Match 'DC03.contoso.com'
             # DC01 excluded because its check is healthy
         }
 
         It 'Should include timestamp information when IncludeTimestamp is true' {
-            $html = New-ADHealthReport -HealthCheckResults $mockResults -IncludeTimestamp $true
+            $fileInfo = New-ADHealthReport -HealthCheckResults $mockResults -IncludeTimestamp $true
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match 'Generated:'
             $html | Should -Match '\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
         }
 
         It 'Should include recommendations section' {
-            $html = New-ADHealthReport -HealthCheckResults $mockResults
+            $fileInfo = New-ADHealthReport -HealthCheckResults $mockResults
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match 'Recommendations'
             $html | Should -Match 'Free up disk space immediately'
             $html | Should -Match 'Monitor replication partners'
         }
 
         It 'Should include details in table format' {
-            $html = New-ADHealthReport -HealthCheckResults $mockResults
+            $fileInfo = New-ADHealthReport -HealthCheckResults $mockResults
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match '<table'
             $html | Should -Match '<th>Property</th>'
             $html | Should -Match '<th>Value</th>'
@@ -266,26 +282,30 @@ Describe 'New-ADHealthReport' {
 
         It 'Should use custom title when provided' {
             $customTitle = 'Contoso AD Health Report'
-            $html = New-ADHealthReport -HealthCheckResults $mockResults -Title $customTitle
+            $fileInfo = New-ADHealthReport -HealthCheckResults $mockResults -Title $customTitle
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match "<title>$customTitle</title>"
             $html | Should -Match "<h1>$customTitle</h1>"
         }
 
         It 'Should include company name when provided' {
             $companyName = 'Contoso Corporation'
-            $html = New-ADHealthReport -HealthCheckResults $mockResults -CompanyName $companyName
+            $fileInfo = New-ADHealthReport -HealthCheckResults $mockResults -CompanyName $companyName
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match $companyName
         }
 
         It 'Should include company logo when provided' {
             $logoUrl = 'https://example.com/logo.png'
-            $html = New-ADHealthReport -HealthCheckResults $mockResults -CompanyLogo $logoUrl
+            $fileInfo = New-ADHealthReport -HealthCheckResults $mockResults -CompanyLogo $logoUrl
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match "<img src='$logoUrl'"
             $html | Should -Match "alt='Company Logo'"
         }
 
         It 'Should exclude healthy checks by default' {
-            $html = New-ADHealthReport -HealthCheckResults $mockResults
+            $fileInfo = New-ADHealthReport -HealthCheckResults $mockResults
+            $html = Get-Content $fileInfo.FullName -Raw
             # By default, healthy checks should not appear in detailed section
             # (only in summary statistics)
             $detailedSection = $html -split 'executive-summary' | Select-Object -Last 1
@@ -293,7 +313,8 @@ Describe 'New-ADHealthReport' {
         }
 
         It 'Should include healthy checks when IncludeHealthyChecks is specified' {
-            $html = New-ADHealthReport -HealthCheckResults $mockResults -IncludeHealthyChecks
+            $fileInfo = New-ADHealthReport -HealthCheckResults $mockResults -IncludeHealthyChecks
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match 'ServiceStatus'
             $html | Should -Match 'status-badge healthy'
         }
@@ -310,18 +331,21 @@ Describe 'New-ADHealthReport' {
                     Recommendations = @()
                 }
             )
-            $html = New-ADHealthReport -HealthCheckResults $healthyResults
+            $fileInfo = New-ADHealthReport -HealthCheckResults $healthyResults
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match 'All Systems Healthy'
             $html | Should -Match 'No issues detected'
         }
 
         It 'Should determine overall status as Critical when critical issues exist' {
-            $html = New-ADHealthReport -HealthCheckResults $mockResults
+            $fileInfo = New-ADHealthReport -HealthCheckResults $mockResults
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match 'Overall Status:.*?Critical'
         }
 
         It 'Should include footer with generation info' {
-            $html = New-ADHealthReport -HealthCheckResults $mockResults
+            $fileInfo = New-ADHealthReport -HealthCheckResults $mockResults
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match 'Generated by AdMonitoring'
             $html | Should -Match 'Report Date:'
         }
@@ -410,19 +434,22 @@ Describe 'New-ADHealthReport' {
         }
 
         It 'Should accept pipeline input' {
-            $html = $mockResults | New-ADHealthReport
-            $html | Should -Not -BeNullOrEmpty
+            $fileInfo = $mockResults | New-ADHealthReport
+            $fileInfo | Should -Not -BeNullOrEmpty
+            $fileInfo | Should -BeOfType [System.IO.FileInfo]
         }
 
         It 'Should process all piped results' {
-            $html = $mockResults | New-ADHealthReport -IncludeHealthyChecks
+            $fileInfo = $mockResults | New-ADHealthReport -IncludeHealthyChecks
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match 'Check1'
             $html | Should -Match 'Check2'
         }
 
         It 'Should handle single piped result' {
-            $html = $mockResults[0] | New-ADHealthReport
-            $html | Should -Not -BeNullOrEmpty
+            $fileInfo = $mockResults[0] | New-ADHealthReport
+            $fileInfo | Should -Not -BeNullOrEmpty
+            $fileInfo | Should -BeOfType [System.IO.FileInfo]
         }
     }
 
@@ -447,7 +474,8 @@ Describe 'New-ADHealthReport' {
                 [PSCustomObject]@{Status='Healthy'; CheckName='C1'; Category='Cat'; Target='T'; Timestamp=Get-Date; Details=@{}; Recommendations=@()}
                 [PSCustomObject]@{Status='Critical'; CheckName='C2'; Category='Cat'; Target='T'; Timestamp=Get-Date; Details=@{}; Recommendations=@()}
             )
-            $html = New-ADHealthReport -HealthCheckResults $results
+            $fileInfo = New-ADHealthReport -HealthCheckResults $results
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match 'Overall Status:.*?Critical'
         }
 
@@ -456,7 +484,8 @@ Describe 'New-ADHealthReport' {
                 [PSCustomObject]@{Status='Healthy'; CheckName='C1'; Category='Cat'; Target='T'; Timestamp=Get-Date; Details=@{}; Recommendations=@()}
                 [PSCustomObject]@{Status='Warning'; CheckName='C2'; Category='Cat'; Target='T'; Timestamp=Get-Date; Details=@{}; Recommendations=@()}
             )
-            $html = New-ADHealthReport -HealthCheckResults $results
+            $fileInfo = New-ADHealthReport -HealthCheckResults $results
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match 'Overall Status:.*?Warning'
         }
 
@@ -465,7 +494,8 @@ Describe 'New-ADHealthReport' {
                 [PSCustomObject]@{Status='Healthy'; CheckName='C1'; Category='Cat'; Target='T'; Timestamp=Get-Date; Details=@{}; Recommendations=@()}
                 [PSCustomObject]@{Status='Healthy'; CheckName='C2'; Category='Cat'; Target='T'; Timestamp=Get-Date; Details=@{}; Recommendations=@()}
             )
-            $html = New-ADHealthReport -HealthCheckResults $results
+            $fileInfo = New-ADHealthReport -HealthCheckResults $results
+            $html = Get-Content $fileInfo.FullName -Raw
             $html | Should -Match 'Overall Status:.*?Healthy'
         }
     }

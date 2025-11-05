@@ -308,7 +308,82 @@ $results | Send-ADHealthReport -To team@contoso.com -SmtpServer localhost
 - `systemPatterns.md` - AD monitoring patterns and architecture
 - `progress.md` - Complete implementation tracking
 
-## Recent Changes (November 4, 2025 - Session 8)
+## Recent Changes (November 5, 2025 - Session 9)
+
+### Get-WinEvent Performance Optimization
+**Task:** Optimize inefficient Get-WinEvent usage patterns  
+**Date:** November 5, 2025, 8:44 AM
+
+**Problem Identified:**
+Two cmdlets (`Test-ADSecurityHealth` and `Test-ADDatabaseHealth`) were using inefficient event log querying:
+```powershell
+# INEFFICIENT - Retrieves ALL events, then filters in memory
+$events = Get-WinEvent @params | Where-Object { $_.Id -eq 4740 }
+```
+
+**Solution Implemented:**
+Moved Event ID filtering to `FilterHashtable` parameter for server-side filtering:
+```powershell
+# EFFICIENT - Filters at Windows Event Log subsystem level
+$params['FilterHashtable'] = @{
+    LogName   = 'Security'
+    Id        = 4740
+    StartTime = $startTime
+}
+$events = Get-WinEvent @params
+```
+
+**Changes Made:**
+
+1. **Test-ADSecurityHealth.ps1** - Optimized 4 event queries:
+   - Event ID 4740 (Account lockouts) - Dedicated query
+   - Event ID 4625 (Failed authentication) - Dedicated query
+   - Event ID 4768 (Kerberos TGT) - Dedicated query
+   - Event ID 4776 (NTLM authentication) - Dedicated query
+   - Changed from 1 query + 4 Where-Object filters → 4 targeted queries
+   - Removed `MaxEvents` parameter (no longer needed with targeted queries)
+
+2. **Test-ADDatabaseHealth.ps1** - Optimized multi-ID query:
+   - Database event IDs (1014, 1159, 2095, 1168, 1173, 467, 1646)
+   - Changed from 1 query + Where-Object filter → 1 query with ID array in FilterHashtable
+   - Added verbose logging for query execution
+
+3. **Test Updates:**
+   - Updated `Test-ADSecurityHealth.Tests.ps1` with new efficiency tests
+   - Updated `Test-ADDatabaseHealth.Tests.ps1` with new efficiency tests
+   - Added tests to verify NO Where-Object filtering on Event IDs
+   - Added tests to verify FilterHashtable-based filtering
+   - Removed obsolete MaxEvents test
+
+**Performance Impact:**
+- **Before:** Retrieved potentially 10,000+ events, filtered in PowerShell memory
+- **After:** Only retrieves matching events from Windows Event Log subsystem
+- **Benefit:** Dramatically faster queries, lower memory usage, reduced network traffic
+
+**Test Results:**
+- Test-ADSecurityHealth.Tests.ps1: 105/105 passing ✅
+- Test-ADDatabaseHealth.Tests.ps1: 23/23 passing ✅
+- PSScriptAnalyzer: 0 errors, 0 warnings ✅
+- Build: SUCCESS ✅
+
+**Technical Details:**
+- `FilterHashtable` with `Id` property pushes filtering to event log API
+- Windows Event Log service filters before data marshaling
+- Reduces CPU, memory, and I/O overhead significantly
+- Particularly impactful on busy domain controllers with large event logs
+- Multiple targeted queries more efficient than one large query + filtering
+
+**Best Practice Applied:**
+Always use `FilterHashtable` for event filtering instead of pipeline filtering with `Where-Object`. This is a fundamental PowerShell performance optimization pattern.
+
+**Files Modified:**
+- `source/Public/Test-ADSecurityHealth.ps1` - Event query optimization
+- `source/Public/Test-ADDatabaseHealth.ps1` - Event query optimization
+- `tests/Unit/Public/Test-ADSecurityHealth.Tests.ps1` - Test updates
+- `tests/Unit/Public/Test-ADDatabaseHealth.Tests.ps1` - Test updates
+- `docs/memorybank/activeContext.md` - This documentation
+
+## Previous Changes (November 4, 2025 - Session 8)
 
 ### Azure Pipelines YAML Update
 **Task:** Remove all stages running on macOS or Linux  

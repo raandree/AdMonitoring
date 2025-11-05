@@ -108,6 +108,42 @@ Describe 'Test-ADDatabaseHealth' {
         }
     }
 
+    Context 'Event log filtering efficiency' {
+        It 'Should use FilterHashtable with Event IDs for efficient filtering' {
+            $definition = (Get-Command Test-ADDatabaseHealth).Definition
+            # Verify FilterHashtable includes Id property with multiple event IDs
+            $definition | Should -Match "FilterHashtable\s*=\s*@\{[^}]*Id\s*=\s*\`$databaseEventIds\.Keys"
+        }
+
+        It 'Should NOT use Where-Object for Event ID filtering' {
+            $definition = (Get-Command Test-ADDatabaseHealth).Definition
+            # Verify we're not piping Get-WinEvent to Where-Object for Id filtering
+            $definition | Should -Not -Match 'Get-WinEvent.*\|.*Where-Object.*\.Id -in'
+        }
+
+        It 'Should define database event IDs in begin block' {
+            $definition = (Get-Command Test-ADDatabaseHealth).Definition
+            $definition | Should -Match '\$databaseEventIds\s*=\s*@\{'
+            $definition | Should -Match '1014\s*='  # Database corruption
+            $definition | Should -Match '1159\s*='  # Version store out of memory
+            $definition | Should -Match '2095\s*='  # Garbage collection
+            $definition | Should -Match '1168\s*='  # Database error
+            $definition | Should -Match '1173\s*='  # Transaction failure
+            $definition | Should -Match '467\s*='   # Defragmentation status
+            $definition | Should -Match '1646\s*='  # Internal database error
+        }
+
+        It 'Should query Directory Service log' {
+            $definition = (Get-Command Test-ADDatabaseHealth).Definition
+            $definition | Should -Match "LogName\s*=\s*['`"]Directory Service['`"]"
+        }
+
+        It 'Should apply StartTime filter' {
+            $definition = (Get-Command Test-ADDatabaseHealth).Definition
+            $definition | Should -Match 'StartTime\s*=\s*\$startTime'
+        }
+    }
+
     # NOTE: Functional tests require ActiveDirectory module, remote registry access, and live DC environment
     # The tests above validate function structure, parameters, and help documentation
     # Integration testing should be performed in an AD environment with:
