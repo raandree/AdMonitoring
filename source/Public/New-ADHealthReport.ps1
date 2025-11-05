@@ -97,6 +97,8 @@ function New-ADHealthReport {
     #>
     [CmdletBinding()]
     [OutputType([System.IO.FileInfo])]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'File creation is the primary purpose of this function, not a side effect. Adding ShouldProcess would make the function awkward to use.')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseBOMForUnicodeEncodedFile', '', Justification = 'HTML output uses UTF-8 without BOM for better web browser compatibility')]
     param(
         [Parameter(Mandatory, ValueFromPipeline)]
         [ValidateNotNullOrEmpty()]

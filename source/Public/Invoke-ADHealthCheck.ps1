@@ -50,14 +50,6 @@ function Invoke-ADHealthCheck {
         Path where the HTML report should be saved. If not specified with -GenerateReport,
         saves to a temporary file. Only used when -GenerateReport is specified.
 
-    .PARAMETER Parallel
-        If specified, runs health checks in parallel for faster execution.
-        Note: Parallel execution may use more system resources.
-
-    .PARAMETER ThrottleLimit
-        Maximum number of parallel jobs when using -Parallel switch.
-        Default: 5
-
     .EXAMPLE
         Invoke-ADHealthCheck
 
@@ -82,9 +74,9 @@ function Invoke-ADHealthCheck {
         Runs replication and SYSVOL checks, then filters for critical issues only.
 
     .EXAMPLE
-        Invoke-ADHealthCheck -Parallel -GenerateReport -ReportPath C:\Reports\AD-Health.html
+        Invoke-ADHealthCheck -GenerateReport -ReportPath C:\Reports\AD-Health.html
 
-        Runs all checks in parallel for faster execution and saves report to specified path.
+        Runs all checks and saves HTML report to specified path.
 
     .INPUTS
         System.String[]
@@ -137,14 +129,7 @@ function Invoke-ADHealthCheck {
         [switch]$GenerateReport,
 
         [Parameter()]
-        [string]$ReportPath,
-
-        [Parameter()]
-        [switch]$Parallel,
-
-        [Parameter()]
-        [ValidateRange(1, 20)]
-        [int]$ThrottleLimit = 5
+        [string]$ReportPath
     )
 
     begin {

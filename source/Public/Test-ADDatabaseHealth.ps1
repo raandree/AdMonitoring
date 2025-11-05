@@ -291,19 +291,19 @@ function Test-ADDatabaseHealth {
                 $events = Get-WinEvent @eventParams
 
                 if ($events) {
-                    foreach ($event in $events) {
+                    foreach ($dbEvent in $events) {
                         $eventInfo = [PSCustomObject]@{
-                            TimeCreated = $event.TimeCreated
-                            EventId = $event.Id
-                            Description = $databaseEventIds[$event.Id]
-                            Message = $event.Message.Substring(0, [Math]::Min(200, $event.Message.Length))
+                            TimeCreated = $dbEvent.TimeCreated
+                            EventId = $dbEvent.Id
+                            Description = $databaseEventIds[$dbEvent.Id]
+                            Message = $dbEvent.Message.Substring(0, [Math]::Min(200, $dbEvent.Message.Length))
                         }
 
-                        switch ($event.Id) {
+                        switch ($dbEvent.Id) {
                             2095 {
                                 # Garbage collection completed
                                 $details.GarbageCollectionEvents += $eventInfo
-                                Write-Verbose "Found garbage collection event at $($event.TimeCreated)"
+                                Write-Verbose "Found garbage collection event at $($dbEvent.TimeCreated)"
                             }
                             1159 {
                                 # Version store out of memory
@@ -317,13 +317,13 @@ function Test-ADDatabaseHealth {
                                 # Database errors
                                 $details.DatabaseErrors += $eventInfo
                                 $status = 'Critical'
-                                $recommendations.Add("Database error detected (Event ID $($event.Id)) - run ntdsutil integrity check immediately")
-                                Write-Warning "Database error (Event $($event.Id)) detected on $dc"
+                                $recommendations.Add("Database error detected (Event ID $($dbEvent.Id)) - run ntdsutil integrity check immediately")
+                                Write-Warning "Database error (Event $($dbEvent.Id)) detected on $dc"
                             }
                             467 {
                                 # Defragmentation status
-                                if ($event.Message -match 'defragmentation') {
-                                    $details.LastDefragTime = $event.TimeCreated
+                                if ($dbEvent.Message -match 'defragmentation') {
+                                    $details.LastDefragTime = $dbEvent.TimeCreated
                                 }
                             }
                         }

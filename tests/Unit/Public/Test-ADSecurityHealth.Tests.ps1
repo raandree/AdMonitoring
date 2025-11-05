@@ -485,8 +485,12 @@ Describe 'Test-ADSecurityHealth' {
 
         It 'Should use efficient FilterHashtable-based filtering' {
             $definition = (Get-Command Test-ADSecurityHealth).Definition
-            # Verify we're using FilterHashtable with Id property
-            $definition | Should -Match "FilterHashtable\s*=\s*@\{[^}]*Id\s*="
+            # Verify we're using FilterHashtable with Id property for each event type
+            $definition | Should -Match "FilterHashtable.*=.*@\{"
+            $definition | Should -Match "Id\s*=\s*4740"  # Lockout events
+            $definition | Should -Match "Id\s*=\s*4625"  # Failed auth events
+            $definition | Should -Match "Id\s*=\s*4768"  # Kerberos events
+            $definition | Should -Match "Id\s*=\s*4776"  # NTLM events
         }
     }
 
