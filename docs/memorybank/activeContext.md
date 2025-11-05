@@ -5,6 +5,15 @@
 **Status**: ALL TESTS PASSING - Module Production Ready ✅
 
 ### Recently Completed (2025-11-05)
+
+#### Project Organization
+1. **Cleaned up root directory structure**
+   - Moved ad-hoc test files to `tests/Sandbox/` directory
+   - Files moved: test-count-behavior.ps1, test-orchestration.ps1, test-ps5-issue.ps1, test-report.ps1, verify-count.ps1
+   - Created dedicated `tests/Sandbox/` for exploratory/debugging scripts
+   - Root directory now only contains essential project files
+
+#### Test and Code Quality (Earlier)
 1. **Fixed all remaining test failures** (9 tests fixed)
    - Fixed Test-ADSecurityHealth.Tests.ps1 regex pattern for FilterHashtable validation
    - All 627 unit tests now passing
